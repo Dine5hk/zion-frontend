@@ -1,0 +1,33 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy App to EC2 via SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+              
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2KEY}}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
+          
+      - name: Install Nginx on EC2
+        run: |
+          ssh ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo apt update && sudo apt install -y nginx"
+          
+      - name: Deploy to EC2
+        run: |
+          rsync -avz --delete ./ ${{ secrets.USER }}@${{ secrets.EC2_IP }}:/var/www/html/
+      - name: Restart Nginx
+        run: |
+          ssh ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo systemctl restart nginx"
