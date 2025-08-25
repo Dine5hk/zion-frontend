@@ -7,11 +7,10 @@ on:
 
 jobs:
   deploy:
-    name: Deploy App to EC2 via SSH
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up SSH
@@ -21,17 +20,17 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
 
-      - name: Install Node.js and Build App
+      - name: Install Node.js and build app
         run: |
           curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
           sudo apt-get install -y nodejs
           npm install
           npm run build
 
-      - name: Deploy Build to EC2
+      - name: Deploy to EC2
         run: |
-          rsync -avz --delete ./dist/ ${{ secrets.USER }}@${{ secrets.EC2_IP }}:/var/www/zion-frontend/
+          rsync -avz --delete ./build/ ${{ secrets.USER }}@${{ secrets.EC2_IP }}:/var/www/html/
 
       - name: Restart NGINX
         run: |
-          ssh ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo systemctl restart nginx"
+          ssh ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo systemctl reload nginx"
