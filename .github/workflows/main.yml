@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to EC2 - Debug Version
 
 on:
   push:
@@ -8,27 +8,27 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up SSH
+      - name: Debug secret display
+        run: |
+          echo "First line of EC2KEY secret:"
+          echo "${{ secrets.EC2KEY }}" | head -n 1
+
+      - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           printf "%s" "${{ secrets.EC2KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
 
-      - name: Test SSH Connection
+      - name: Verify SSH access
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.EC2_IP }} "echo SSH connected successfully"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.EC2_IP }} "echo SSH connection success"
 
-      - name: Install Nginx on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo apt update && sudo apt install -y nginx"
-
-      - name: Deploy App to EC2
+      - name: Deploy files to EC2
         run: |
           rsync -avz --delete ./ ${{ secrets.USER }}@${{ secrets.EC2_IP }}:/var/www/html/
 
