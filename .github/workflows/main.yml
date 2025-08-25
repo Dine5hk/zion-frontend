@@ -13,54 +13,21 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-          
+              
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
-          cat <<EOF > ~/.ssh/id_rsa
------BEGIN RSA PRIVATE KEY-----
-MIIEpgIBAAKCAQEAzncG7pIOLta0B4UNqE9iHhYFyRREgGF3/WS5ED47SlTx3LgL
-GwnSyVCzjbU0Lt8uzjQPlyBsHr1+2N4mQp4cniaFzAs9VHa6poYW4gw25aYjZswJ
-mbwGkMWQFt83kaLW09qaDZ6eKuo4K3wLXU+pOvvLVPqafIg5nVP4MUXfRXrWOH9p
-5qIemUMsp6JYNiX62zDozDwEmEBW2RJ6vza3MuCHaj0NWI2S3sWzgoap/U2nNokf
-4tf9hO3NImemTAkc4cPJeWuUU7FkKbdj83AXVZBOVvL2in4BoaNg5PiHxxmxHUsU
-7qdjDO6CfAFagJluI2KuiM1ZodN6rwbbGH33gwIDAQABAoIBAQCitnl3ERIuZbTR
-7FEcIRvBfDepBdkKmEYZJAUZQQI3DYTjHwRZlb9SOtCW0ITEn81iYvMadknfXBYY
-0dKzU6pYFSIC8aSu6TcmP6zPDzNAf1ONEyZJyz4dYCWzcM15cC0AH1qjeytJxPbp
-hkPqkPpc6s2PNkUD+dP2IpQKOPfB56Y3kIjBO+qUUF5eds9hFXgEZmivzdH8l+kk
-h1x1XmSZuWqtiRmgp2krPGO4yi/RQcHLApwQInYkGK/iYi9qRWpGbzhirIwp62MX
-2NUYQ6m13y+svD4hD6+Fb6XzCUMRBwyhIDE6MpqH8ZTOCOuSDbCrZVfAzSKnDAt6
-BiBp6hyZAoGBAPpMSd1s8vofCZOVDLnTocxEOQzdHZiW2q0a8HeB41VVWZ4RRxm8
-Pee13+DID/e+58w2rMbWM59gY8EGPgjJW9XgTE2O2JWwxnyVh9uLUglqbIL64TAn
-NYksZxKe2Tv1u+ayT/xWB81Shczr4Pwi6trxQF2GpkBfXzEXYNXyh61nAoGBANMr
-G9uA4fZ2/RcUE1J2D4oVQOxGUlKiyEjV2O26wu3hwoHC2m1aq/C3b1owhhaXbeKC
-f4L5F0TMFfcjeR02mZFGccFT///jWYybAFO89GKJ7EI3u8ZaA+nxMA5mj8yOsgnh
-ZznfVs3yiUek04eI+JPQok7qgXL2R15njqcgqneFAoGBALyYYQvDvO00F74pD7ax
-PPex7B7COTuxZ0IJy2jw6L9ymR0ePampiieehftUI5v0L6pTBCqqWalcMq3Nq05p
-kpX79OJ3oMBhu51B+mU1e/H2S58BtE3ZLWCXoW6JXHvuc8+nSdeDZ0uRQ5odnZ++
-G6IvJ+WQwJI+inZt/BwZK5w/AoGBAMmmdfCz75QDZoY+VoE9WnN6/kdik8RzzBy5
-kXDbEsBFARAW+azJlD3HfZ87jSBPtNBD2+4/XbgFx8f76PE7rYQsJ/787w71lRMP
-BU3xt9HNcX5+aGLunKQu/LwTtqgZb+y9gWyjWOpL/EodHR5lbzMAXa5MhBc7FUYS
-UAhKyl5dAoGBAOTfFFIlducUZjvF/5M9yyAohM+zVtRzNBqcvp1QJnHYVWd0ft37
-UKPUAhZLXhECHQuTMHROOhi6PqZXLUtGldsaMvJEy71OtigisQufdIPK1iTA1B0s
-AoL3SyIkrNNvmTzTYF52wQN+kCJsTOpFaEzdZ/u6/nQe7Q+TfDdghpor
------END RSA PRIVATE KEY-----
-EOF
+          echo "${{ secrets.KEY}}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 12.34.56.78 >> ~/.ssh/known_hosts
-        shell: bash
+          ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
           
       - name: Install Nginx on EC2
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@12.34.56.78 "sudo apt update && sudo apt install -y nginx"
-        shell: bash
+          ssh ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo apt update && sudo apt install -y nginx"
           
       - name: Deploy to EC2
         run: |
-          rsync -avz --delete ./ ubuntu@12.34.56.78:/var/www/html/
-        shell: bash
-
+          rsync -avz --delete ./ ${{ secrets.USER }}@${{ secrets.EC2_IP }}:/var/www/html/
       - name: Restart Nginx
         run: |
-          ssh ubuntu@12.34.56.78 "sudo systemctl restart nginx"
-        shell: bash
+          ssh ${{ secrets.USER }}@${{ secrets.EC2_IP }} "sudo systemctl restart nginx"
