@@ -16,10 +16,13 @@ jobs:
               
       - name: Set up SSH
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.KEY}}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
+         mkdir -p ~/.ssh
+         cat <<EOF > ~/.ssh/id_rsa
+         ${{ secrets.KEY }}
+         EOF
+         chmod 600 ~/.ssh/id_rsa
+         ssh-keyscan -H ${{ secrets.EC2_IP }} >> ~/.ssh/known_hosts
+
           
       - name: Install Nginx on EC2
         run: |
